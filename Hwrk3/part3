@@ -1,0 +1,95 @@
+Script started on 2025-04-17 01:54:06+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="160" LINES="16"]
+[0;32m@MatOdel [0m➜ [1;34m/workspaces/homework-3-mongo-MatOdel/Hwrk3 [0;36m([1;31mmain[0;36m) [0m$ ls
+Installing_mongodb_scirpt  part3  setup_mongo.py
+[0;32m@MatOdel [0m➜ [1;34m/workspaces/homework-3-mongo-MatOdel/Hwrk3 [0;36m([1;31mmain[0;36m) [0m$ cat setup_mongo.py
+from pymongo import MongoClient
+from datetime import datetime
+from bson.objectid import ObjectId
+
+# Connect to MongoDB
+client = MongoClient("mongodb://localhost:27017/")
+db = client["acme_financial"]
+
+# Applications collection
+applications = db["applications"]
+
+# ----------- 1. Accept application -----------
+def accept_application(name, zipcode):
+    application = {
+        "name": name,
+        "zipcode": zipcode,
+        "status": "received",
+        "notes": [],
+        "created_at": datetime.utcnow()
+    }
+    result = applications.insert_one(application)
+    return str(result.inserted_id)
+
+# ----------- 2. Check status -----------
+def check_status(application_id):
+    app = applications.find_one({"_id": ObjectId(application_id)})
+    if not app:
+        return "not found"
+    return app["status"]
+
+# ----------- 3. Change status -----------
+def change_status(application_id, new_status):
+    result = applications.update_one(
+        {"_id": ObjectId(application_id)},
+        {"$set": {"status": new_status}}
+    )
+    return result.modified_count > 0
+
+# ----------- 4. Add note to application -----------
+def add_note(application_id, message, subphase=None, task=None):
+    note = {
+        "timestamp": datetime.utcnow(),
+        "message": message,
+        "subphase": subphase,
+        "task": task
+    }
+    applications.update_one(
+        {"_id": ObjectId(application_id)},
+        {"$push": {"notes": note}}
+    )
+
+# ----------- 5. Get all notes for application -----------
+def get_notes(application_id):
+    app = applications.find_one({"_id": ObjectId(application_id)})
+    if not app:
+        return "not found"
+    return app.get("notes", [])
+
+# ---------------- Example Test ----------------
+if __name__ == "__main__":
+    app_id = accept_application("John Doe", "12345")
+    print(f"Application ID: {app_id}")
+
+    print("Initial Status:", check_status(app_id))
+
+    change_status(app_id, "processing")
+    print("Status after update:", check_status(app_id))
+
+    add_note(app_id, "Started personal details checking", subphase="personal_details", task="verify_name")
+    add_note(app_id, "Credit check complete", subphase="credit_check", task="credit_report")
+    add_note(app_id, "Loan approved", subphase="certification_check", task="final_review")
+
+    print("Notes:")
+    for note in get_notes(app_id):
+        print(note)
+[0;32m@MatOdel [0m➜ [1;34m/workspaces/homework-3-mongo-MatOdel/Hwrk3 [0;36m([1;31mmain[0;36m) [0m$ python setup_mongo.py
+/workspaces/homework-3-mongo-MatOdel/Hwrk3/setup_mongo.py:19: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "created_at": datetime.utcnow()
+Application ID: 68005f61a3c8d6616c1a212f
+Initial Status: received
+Status after update: processing
+/workspaces/homework-3-mongo-MatOdel/Hwrk3/setup_mongo.py:42: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "timestamp": datetime.utcnow(),
+Notes:
+{'timestamp': datetime.datetime(2025, 4, 17, 1, 54, 41, 315000), 'message': 'Started personal details checking', 'subphase': 'personal_details', 'task': 'verify_name'}
+{'timestamp': datetime.datetime(2025, 4, 17, 1, 54, 41, 316000), 'message': 'Credit check complete', 'subphase': 'credit_check', 'task': 'credit_report'}
+{'timestamp': datetime.datetime(2025, 4, 17, 1, 54, 41, 316000), 'message': 'Loan approved', 'subphase': 'certification_check', 'task': 'final_review'}
+[0;32m@MatOdel [0m➜ [1;34m/workspaces/homework-3-mongo-MatOdel/Hwrk3 [0;36m([1;31mmain[0;36m) [0m$ exit
+exit
+
+Script done on 2025-04-17 01:56:21+00:00 [COMMAND_EXIT_CODE="0"]

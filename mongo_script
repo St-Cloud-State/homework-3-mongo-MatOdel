@@ -1,0 +1,50 @@
+//Commands to install mongodb in ubuntu
+//sudo apt update
+//sudo apt install -y mongodb
+// sudo service mongodb start (can also use restart)
+// Link to video installing with pymongo: 
+https://mediaspace.minnstate.edu/media/Sarnath%20Ramnaths%20Personal%20Meeting%20Room/1_ctlolzs9
+//To remove:
+//sudo apt remove mongodb
+//sudo apt purge mongodb
+//sudo apt autoremove
+
+//mongo (takes you to mongo prompt)
+// >exit; //will get you out 
+
+
+// Drop the 'towns' collection if it exists (for demonstration purposes)
+db.towns.drop();
+
+// Create the 'towns' collection
+db.createCollection("towns");
+
+// Insert example documents into the 'towns' collection
+db.towns.insertMany([
+  { name: "New York", population: 8537673, state: "New York" },
+  { name: "Los Angeles", population: 3976322, state: "California" },
+  { name: "Chicago", population: 2704958, state: "Illinois" },
+  { name: "Minneapolis–St. Paul", population: 4085415, state: "Minnesota" }
+
+]);
+
+// Display all documents in the 'towns' collection
+print("All documents in 'towns' collection:");
+db.towns.find().forEach(printjson);
+
+// Update the population of a town
+db.towns.updateOne(
+  { name: "New York" }, // Filter criteria
+  { $set: { population: 8550405 } } // Update operation
+);
+
+// Display the updated document
+print("Updated document for 'New York':");
+printjson(db.towns.findOne({ name: "New York" }));
+
+// Delete a town from the collection
+db.towns.deleteOne({ name: "Chicago" });
+
+// Display remaining documents in the 'towns' collection
+print("Remaining documents in 'towns' collection after deletion:");
+db.towns.find().forEach(printjson);
